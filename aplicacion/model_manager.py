@@ -1,6 +1,7 @@
 # model_manager.py - Gestión del modelo de IA para la detección de emociones
 
 import os
+import cv2
 import numpy as np
 import threading
 import tensorflow as tf
