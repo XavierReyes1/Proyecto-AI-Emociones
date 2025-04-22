@@ -20,17 +20,21 @@ class UIManager:
             'Enojado': (0, 0, 128),         # Rojo oscuro
             'Neutral': (255, 255, 255)      # Blanco
         }
-
-        # Coordenadas del botón
-        self.button_x = None
-        self.button_y = None
-        self.button_width = 150
-        self.button_height = 30
-        self.button_clicked = False  # Flag para saber si se hizo clic
-
+        
+        # Variables para recomendaciones
+        self.current_recommendation = None
+        self.recommendation_color = (255, 255, 255)
+        self.show_music_option = False
+        
     def get_emotion_color(self, emotion):
         """Devuelve el color asignado a una emoción"""
         return self.emotion_colors.get(emotion, (0, 255, 0))
+        
+    def set_recommendation(self, text, color=(255, 255, 255), show_music_option=False):
+        """Establece la recomendación actual para mostrar en la interfaz"""
+        self.current_recommendation = text
+        self.recommendation_color = color
+        self.show_music_option = show_music_option
         
     def create_info_panel(self):
         """Crea un panel lateral para mostrar información"""
@@ -56,29 +60,9 @@ class UIManager:
         cv2.putText(panel, self.detector.instruction, (20, 115), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
         
-        # Botón "Ir a respuesta"
-        button_text = "Ir a respuesta"
-        self.button_x = panel.shape[1] - self.button_width - 20
-        self.button_y = panel.shape[0] - self.button_height - 20
-
-        # Dibujar fondo del botón
-        cv2.rectangle(panel, 
-                      (self.button_x, self.button_y), 
-                      (self.button_x + self.button_width, self.button_y + self.button_height), 
-                      (50, 150, 250),  # Color azul claro
-                      thickness=-1)
-
-        # Centrar el texto en el botón
-        text_size = cv2.getTextSize(button_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)[0]
-        text_x = self.button_x + (self.button_width - text_size[0]) // 2
-        text_y = self.button_y + (self.button_height + text_size[1]) // 2
-
-        cv2.putText(panel, 
-                    button_text, 
-                    (text_x, text_y), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 
-                    0.6, 
-                    (255, 255, 255), 2)
+        # FPS
+        cv2.putText(panel, f"FPS: {self.detector.fps:.1f}", (panel.shape[1] - 100, panel.shape[0] - 20), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
         
         # Si estamos detectando, mostrar tiempo
         if self.detector.detecting:
@@ -115,10 +99,14 @@ class UIManager:
         
         # Dibujar resultados de emociones detectadas
         if self.detector.emotion_counter:
+            # Título de la sección
             cv2.putText(panel, "Emociones detectadas:", (20, 210), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
             
+            # Calcular totales para porcentajes
             total_detections = sum(self.detector.emotion_counter.values())
+            
+            # Mostrar cada emoción detectada
             y_pos = 240
             for emotion, count in sorted(self.detector.emotion_counter.items(), key=lambda x: x[1], reverse=True):
                 if count == 0:
@@ -127,25 +115,74 @@ class UIManager:
                 percentage = int((count / total_detections) * 100) if total_detections > 0 else 0
                 color = self.get_emotion_color(emotion)
                 
+                # Mini barra de progreso para cada emoción
                 bar_width = 100
                 emotion_width = int((count / max(self.detector.emotion_counter.values())) * bar_width)
                 
+                # Dibujar nombre y porcentaje
                 cv2.putText(panel, f"{emotion}:", (20, y_pos), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+                           
+                # Dibujar barra
                 cv2.rectangle(panel, (130, y_pos-10), (130+bar_width, y_pos-2), (100, 100, 100), -1)
                 cv2.rectangle(panel, (130, y_pos-10), (130+emotion_width, y_pos-2), color, -1)
+                
+                # Dibujar porcentaje
                 cv2.putText(panel, f"{percentage}%", (240, y_pos), 
                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                 
                 y_pos += 25
                 
+        # Si terminamos la detección, mostrar resultado final
         if self.detector.waiting_for_restart and self.detector.emotion_detected:
-            cv2.rectangle(panel, (10, panel.shape[0]-150), (panel.shape[1]-10, panel.shape[0]-50), (0, 0, 0), -1)
-            cv2.putText(panel, "Resultado final:", (20, panel.shape[0]-130), 
+            # Fondo para el resultado
+            cv2.rectangle(panel, (10, panel.shape[0]-200), (panel.shape[1]-10, panel.shape[0]-50), (0, 0, 0), -1)
+            
+            # Texto de resultado
+            cv2.putText(panel, "Resultado final:", (20, panel.shape[0]-180), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+            
             color = self.get_emotion_color(self.detector.emotion_detected)
-            cv2.putText(panel, self.detector.emotion_detected, (20, panel.shape[0]-100), 
+            cv2.putText(panel, self.detector.emotion_detected, (20, panel.shape[0]-150), 
                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
+            
+            # Mostrar recomendación actual si hay alguna
+            if self.current_recommendation:
+                # Dividir la recomendación en múltiples líneas si es necesario
+                recommendation_text = self.current_recommendation
+                y_pos = panel.shape[0] - 120
+                
+                # Verificar si el texto es demasiado largo
+                if len(recommendation_text) > 35:
+                    words = recommendation_text.split()
+                    lines = []
+                    current_line = ""
+                    
+                    for word in words:
+                        if len(current_line + " " + word) <= 35:
+                            current_line += " " + word if current_line else word
+                        else:
+                            lines.append(current_line)
+                            current_line = word
+                    
+                    if current_line:
+                        lines.append(current_line)
+                    
+                    for line in lines:
+                        cv2.putText(panel, line, (20, y_pos), 
+                                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.recommendation_color, 1)
+                        y_pos += 20
+                else:
+                    cv2.putText(panel, recommendation_text, (20, y_pos), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.recommendation_color, 1)
+                    y_pos += 20
+                
+                # Mostrar opción de música si está activada
+                if self.show_music_option:
+                    cv2.putText(panel, "Presiona 'M' para escuchar música", (20, y_pos), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+            
+            # Instrucciones
             cv2.putText(panel, 'R - Reiniciar', (20, panel.shape[0]-70), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
             cv2.putText(panel, 'Q - Salir', (150, panel.shape[0]-70), 
@@ -160,30 +197,27 @@ class UIManager:
         x = (frame.shape[1] - width) // 2
         y = frame.shape[0] - 80
         
+        # Calcular progreso
         progress = min(elapsed / total, 1.0)
         progress_width = int(width * progress)
         
+        # Dibujar fondo
         cv2.rectangle(frame, (x, y), (x + width, y + height), (100, 100, 100), -1)
         
+        # Dibujar progreso
         if progress < 0.5:
-            color = (0, 255, 255)
+            color = (0, 255, 255)  # Amarillo
         elif progress < 0.75:
-            color = (0, 165, 255)
+            color = (0, 165, 255)  # Naranja
         else:
-            color = (0, 255, 0)
+            color = (0, 255, 0)    # Verde
             
         cv2.rectangle(frame, (x, y), (x + progress_width, y + height), color, -1)
         
+        # Dibujar texto
         percentage = int(progress * 100)
         cv2.putText(frame, f"{percentage}%", (x + width//2 - 20, y + height//2 + 5), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
         
+        # Dibujar borde
         cv2.rectangle(frame, (x, y), (x + width, y + height), (200, 200, 200), 1)
-
-    def handle_click(self, x, y):
-        """Detectar clics en el botón"""
-        if (self.button_x is not None) and (self.button_y is not None):
-            if (self.button_x <= x <= self.button_x + self.button_width) and \
-               (self.button_y <= y <= self.button_y + self.button_height):
-                print("¡Botón 'Ir a respuesta' clickeado!")
-                self.button_clicked = True

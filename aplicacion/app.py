@@ -1,15 +1,98 @@
 #!/usr/bin/env python3
 # app.py - Archivo principal del detector de emociones
-
 import cv2
+import tkinter as tk
+from tkinter import messagebox, ttk
 from detector import EmotionDetector
+
+def show_setup_dialog():
+    """Muestra un diálogo para configurar las preferencias de recomendaciones"""
+    root = tk.Tk()
+    root.title("Configuración del Detector de Emociones")
+    root.geometry("400x400")
+    root.resizable(False, False)
+    
+    # Centrar la ventana
+    root.eval('tk::PlaceWindow . center')
+    
+    # Estilos
+    style = ttk.Style()
+    style.configure("TCheckbutton", font=("Arial", 12))
+    style.configure("TLabel", font=("Arial", 12))
+    style.configure("TButton", font=("Arial", 12))
+    
+    # Título
+    tk.Label(root, text="Detector de Emociones", font=("Arial", 16, "bold")).pack(pady=20)
+    tk.Label(root, text="Selecciona las opciones de recomendación:", font=("Arial", 12)).pack(pady=10)
+    
+    # Variables para opciones
+    show_messages = tk.BooleanVar(value=True)
+    show_music = tk.BooleanVar(value=True)
+    show_actions = tk.BooleanVar(value=True)
+    use_colors = tk.BooleanVar(value=True)
+    random_recommendations = tk.BooleanVar(value=False)
+    
+    # Opciones
+    ttk.Checkbutton(root, text="Mostrar mensajes motivacionales", variable=show_messages).pack(anchor=tk.W, padx=30, pady=5)
+    ttk.Checkbutton(root, text="Recomendar música según emoción", variable=show_music).pack(anchor=tk.W, padx=30, pady=5)
+    ttk.Checkbutton(root, text="Sugerir acciones según emoción", variable=show_actions).pack(anchor=tk.W, padx=30, pady=5)
+    ttk.Checkbutton(root, text="Usar colores según emoción", variable=use_colors).pack(anchor=tk.W, padx=30, pady=5)
+    ttk.Checkbutton(root, text="Recomendaciones aleatorias", variable=random_recommendations).pack(anchor=tk.W, padx=30, pady=5)
+    
+    preferences = {
+        'show_messages': show_messages,
+        'show_music': show_music,
+        'show_actions': show_actions,
+        'use_colors': use_colors,
+        'random_recommendations': random_recommendations
+    }
+    
+    # Variable para controlar si el usuario pulsó iniciar
+    user_started = tk.BooleanVar(value=False)
+    
+    def on_start():
+        user_started.set(True)
+        root.destroy()
+    
+    def on_cancel():
+        root.destroy()
+    
+    # Botones
+    button_frame = tk.Frame(root)
+    button_frame.pack(pady=20)
+    
+    ttk.Button(button_frame, text="Iniciar", command=on_start).pack(side=tk.LEFT, padx=10)
+    ttk.Button(button_frame, text="Cancelar", command=on_cancel).pack(side=tk.LEFT, padx=10)
+    
+    # Información
+    tk.Label(root, text="Nota: Presiona 'Q' para salir de la aplicación\ny 'R' para reiniciar la detección", 
+            font=("Arial", 10), fg="gray").pack(pady=20)
+    
+    root.mainloop()
+    
+    # Si el usuario pulsó iniciar, retornar las preferencias
+    if user_started.get():
+        return {k: v.get() for k, v in preferences.items()}
+    return None
 
 def main():
     """Función principal que ejecuta la aplicación de detección de emociones"""
-    print("Iniciando Detector de Emociones...")
+    print("Iniciando configuración del Detector de Emociones...")
     
-    # Crear instancia del detector
-    detector = EmotionDetector()
+    # Mostrar diálogo de configuración
+    preferences = show_setup_dialog()
+    
+    # Si el usuario canceló, salir
+    if preferences is None:
+        print("Configuración cancelada por el usuario")
+        return
+    
+    print("Iniciando detector con las siguientes preferencias:")
+    for key, value in preferences.items():
+        print(f"- {key}: {value}")
+    
+    # Crear instancia del detector con las preferencias
+    detector = EmotionDetector(preferences)
     
     # Ejecutar el detector
     detector.run()

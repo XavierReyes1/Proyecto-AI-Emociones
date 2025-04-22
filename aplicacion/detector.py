@@ -9,11 +9,21 @@ import os
 
 from model_manager import ModelManager
 from ui_manager import UIManager
+from recommendation_manager import RecommendationManager
 
 class EmotionDetector:
     """Clase principal que maneja el detector de emociones faciales"""
     
-    def __init__(self):
+    def __init__(self, preferences=None):
+        # Guardar preferencias del usuario
+        self.preferences = preferences or {
+            'show_messages': True,
+            'show_music': True,
+            'show_actions': True,
+            'use_colors': True,
+            'random_recommendations': False
+        }
+        
         # Dimensiones de la interfaz
         self.camera_width = 640
         self.camera_height = 480
@@ -55,6 +65,9 @@ class EmotionDetector:
         self.cap = None
         self.face_cascade = None
         
+        # Inicializar el gestor de recomendaciones después de UI
+        self.recommendation_manager = None
+        
     def initialize(self):
         """Inicializa los recursos necesarios"""
         try:
@@ -74,6 +87,9 @@ class EmotionDetector:
             
             # Iniciar carga del modelo en un hilo separado
             self.model_manager.load_model_async()
+            
+            # Inicializar el gestor de recomendaciones
+            self.recommendation_manager = RecommendationManager(self)
                 
             return True
         except Exception as e:
@@ -178,6 +194,10 @@ class EmotionDetector:
                             self.emotion_detected = self.get_most_frequent_emotion()
                             self.waiting_for_restart = True
                             self.detecting = False
+                            
+                            # Iniciar recomendaciones basadas en la emoción detectada
+                            if self.emotion_detected and self.recommendation_manager:
+                                self.recommendation_manager.start_recommendations(self.emotion_detected)
                     
         # Si terminamos y tenemos resultado
         if self.waiting_for_restart and self.emotion_detected:
@@ -255,9 +275,22 @@ class EmotionDetector:
                     self.instruction = "Coloca tu rostro frente a la cámara"
                     self.emotion_counter.clear()
                     
+                    # Detener recomendaciones
+                    if self.recommendation_manager:
+                        self.recommendation_manager.stop_recommendations()
+                        
+                # Tecla M para reproducir música recomendada
+                if key == ord('m') and self.waiting_for_restart:
+                    if self.recommendation_manager:
+                        self.recommendation_manager.play_music_recommendation()
+                    
         except KeyboardInterrupt:
             pass
         finally:
+            # Detener recomendaciones
+            if self.recommendation_manager:
+                self.recommendation_manager.stop_recommendations()
+                
             # Liberar recursos
             self.running = False
             self.frame_ready.set()  # Desbloquear el hilo de procesamiento
