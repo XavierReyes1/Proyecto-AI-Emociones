@@ -26,7 +26,7 @@ class EmotionDetector:
         self.start_time = 0
         self.emotion_detected = None
         self.waiting_for_restart = False
-        self.instruction = "Iniciando cámara y cargando modelo..."
+        self.instruction = "Iniciando camara y cargando modelo..."
         self.emotion_counter = defaultdict(int)
         self.last_detection_time = 0
         self.detection_interval = 0.5  # Intervalo entre detecciones (segundos)
@@ -81,17 +81,17 @@ class EmotionDetector:
             return False
     
     def preprocess_face(self, gray_frame, x, y, w, h):
-        """Preprocesa el rostro para la predicción"""
+        """Preprocesa el rostro para la prediccion"""
         return self.model_manager.preprocess_face(gray_frame, x, y, w, h)
 
     def get_most_frequent_emotion(self):
-        """Obtiene la emoción más frecuente detectada durante el periodo"""
+        """Obtiene la emocion mas frecuente detectada durante el periodo"""
         if not self.emotion_counter:
             return None
         return max(self.emotion_counter.items(), key=lambda x: x[1])[0]
     
     def process_frame(self, frame):
-        """Procesa un frame de la cámara"""
+        """Procesa un frame de la camara"""
         # Crear un lienzo para la interfaz completa
         display = np.zeros((self.window_height, self.window_width, 3), dtype=np.uint8)
         
@@ -122,7 +122,7 @@ class EmotionDetector:
 
         if not self.waiting_for_restart:
             if len(faces) == 0:
-                self.instruction = "Coloca tu rostro frente a la cámara"
+                self.instruction = "Coloca tu rostro frente a la camara"
                 self.detecting = False
                 self.emotion_counter.clear()
             else:
@@ -138,19 +138,19 @@ class EmotionDetector:
 
                     # Verificar posición del rostro
                     if w < frame_width * 0.2:
-                        self.instruction = "Acércate un poco más"
+                        self.instruction = "Acercate un poco mas"
                         self.detecting = False
                         self.emotion_counter.clear()
                     elif x < frame_width * 0.2:
-                        self.instruction = "Muévete hacia la derecha"
+                        self.instruction = "Muevete hacia la derecha"
                         self.detecting = False
                         self.emotion_counter.clear()
                     elif (x + w) > frame_width * 0.8:
-                        self.instruction = "Muévete hacia la izquierda"
+                        self.instruction = "Muevete hacia la izquierda"
                         self.detecting = False
                         self.emotion_counter.clear()
                     else:
-                        self.instruction = "Perfecto, mantente así"
+                        self.instruction = "Perfecto, mantente asi"
                         if not self.detecting:
                             self.start_time = time.time()
                             self.detecting = True
@@ -229,7 +229,7 @@ class EmotionDetector:
             while True:
                 ret, frame = self.cap.read()
                 if not ret:
-                    print("Error al leer frame de la cámara")
+                    print("Error al leer frame de la camara")
                     break
                     
                 # Voltear horizontalmente para efecto espejo
@@ -252,7 +252,7 @@ class EmotionDetector:
                     self.waiting_for_restart = False
                     self.emotion_detected = None
                     self.detecting = False
-                    self.instruction = "Coloca tu rostro frente a la cámara"
+                    self.instruction = "Coloca tu rostro frente a la camara"
                     self.emotion_counter.clear()
                     
         except KeyboardInterrupt:
