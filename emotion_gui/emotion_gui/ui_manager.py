@@ -3,6 +3,7 @@
 import cv2
 import numpy as np
 import time
+import subprocess
 
 class UIManager:
     """Clase que gestiona la interfaz de usuario del detector de emociones"""
@@ -29,11 +30,11 @@ class UIManager:
         self.button_clicked = False  # Flag para saber si se hizo clic
 
     def get_emotion_color(self, emotion):
-        """Devuelve el color asignado a una emoción"""
+        """Devuelve el color asignado a una emocion"""
         return self.emotion_colors.get(emotion, (0, 255, 0))
         
     def create_info_panel(self):
-        """Crea un panel lateral para mostrar información"""
+        """Crea un panel lateral para mostrar informacion"""
         panel = np.zeros((self.detector.window_height, self.detector.panel_width, 3), dtype=np.uint8)
         
         # Fondo del panel
@@ -180,10 +181,22 @@ class UIManager:
         
         cv2.rectangle(frame, (x, y), (x + width, y + height), (200, 200, 200), 1)
 
+
+
+    def ejecutar_ventana_respuesta(self):
+        """Ejecutar ventana_respuesta.py como un subproceso"""
+        try:
+            subprocess.run(["python", "ventana_respuesta.py"], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error al ejecutar ventana_respuesta.py: {e}")
+    
+
     def handle_click(self, x, y):
-        """Detectar clics en el botón"""
+        """Detectar clics en el boton"""
         if (self.button_x is not None) and (self.button_y is not None):
             if (self.button_x <= x <= self.button_x + self.button_width) and \
-               (self.button_y <= y <= self.button_y + self.button_height):
-                print("¡Botón 'Ir a respuesta' clickeado!")
+            (self.button_y <= y <= self.button_y + self.button_height):
+                print("¡Boton 'Ir a respuesta' clickeado!")
+                self.ejecutar_ventana_respuesta()  # Ejecutar el script aquí
                 self.button_clicked = True
+
