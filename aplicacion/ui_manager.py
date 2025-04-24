@@ -36,6 +36,8 @@ class UIManager:
         self.recommendation_color = color
         self.show_music_option = show_music_option
         
+    # En ui_manager.py
+
     def create_info_panel(self):
         """Crea un panel lateral para mostrar información"""
         panel = np.zeros((self.detector.window_height, self.detector.panel_width, 3), dtype=np.uint8)
@@ -48,21 +50,21 @@ class UIManager:
         
         # Título
         cv2.putText(panel, "Detector de Emociones", (20, 30), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         
         # Información del modelo
         cv2.putText(panel, "Modelo: RAF-DB", (20, 60), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
         
         # Estado actual
         cv2.putText(panel, "Estado:", (20, 90), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
         cv2.putText(panel, self.detector.instruction, (20, 115), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
         
         # FPS
         cv2.putText(panel, f"FPS: {self.detector.fps:.1f}", (panel.shape[1] - 100, panel.shape[0] - 20), 
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
         
         # Si estamos detectando, mostrar tiempo
         if self.detector.detecting:
@@ -76,7 +78,7 @@ class UIManager:
             
             # Texto de tiempo
             cv2.putText(panel, f"Analizando: {remaining:.1f}s", (20, 150), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 1)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 1)
             
             # Fondo de la barra
             cv2.rectangle(panel, (20, 160), (20 + bar_width, 160 + bar_height), (100, 100, 100), -1)
@@ -95,13 +97,13 @@ class UIManager:
             # Porcentaje
             percentage = int(progress * 100)
             cv2.putText(panel, f"{percentage}%", (20 + bar_width//2 - 15, 160 + bar_height//2 + 5), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
         
         # Dibujar resultados de emociones detectadas
         if self.detector.emotion_counter:
             # Título de la sección
             cv2.putText(panel, "Emociones detectadas:", (20, 210), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
             
             # Calcular totales para porcentajes
             total_detections = sum(self.detector.emotion_counter.values())
@@ -121,74 +123,184 @@ class UIManager:
                 
                 # Dibujar nombre y porcentaje
                 cv2.putText(panel, f"{emotion}:", (20, y_pos), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
-                           
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+                        
                 # Dibujar barra
                 cv2.rectangle(panel, (130, y_pos-10), (130+bar_width, y_pos-2), (100, 100, 100), -1)
                 cv2.rectangle(panel, (130, y_pos-10), (130+emotion_width, y_pos-2), color, -1)
                 
                 # Dibujar porcentaje
                 cv2.putText(panel, f"{percentage}%", (240, y_pos), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
                 
                 y_pos += 25
                 
         # Si terminamos la detección, mostrar resultado final
         if self.detector.waiting_for_restart and self.detector.emotion_detected:
-            # Fondo para el resultado
-            cv2.rectangle(panel, (10, panel.shape[0]-200), (panel.shape[1]-10, panel.shape[0]-50), (0, 0, 0), -1)
+            # Crear un fondo más grande para las recomendaciones (panel de recomendaciones mejorado)
+            rec_panel_height = 280  # Aumentamos la altura del panel
+            rec_panel_y = panel.shape[0] - rec_panel_height - 30  # Posición Y ajustada
+            cv2.rectangle(panel, (10, rec_panel_y), (panel.shape[1]-10, panel.shape[0]-30), (30, 30, 30), -1)
+            cv2.rectangle(panel, (10, rec_panel_y), (panel.shape[1]-10, panel.shape[0]-30), (100, 100, 100), 1)
             
             # Texto de resultado
-            cv2.putText(panel, "Resultado final:", (20, panel.shape[0]-180), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+            cv2.putText(panel, "Resultado final:", (20, rec_panel_y + 25), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
             
             color = self.get_emotion_color(self.detector.emotion_detected)
-            cv2.putText(panel, self.detector.emotion_detected, (20, panel.shape[0]-150), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
+            cv2.putText(panel, self.detector.emotion_detected, (20, rec_panel_y + 55), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
             
-            # Mostrar recomendación actual si hay alguna
-            if self.current_recommendation:
-                # Dividir la recomendación en múltiples líneas si es necesario
-                recommendation_text = self.current_recommendation
-                y_pos = panel.shape[0] - 120
+            # Mostrar todas las recomendaciones disponibles
+            if self.detector.emotion_detected and hasattr(self.detector, 'recommendation_manager'):
+                rec_manager = self.detector.recommendation_manager
+                emotion = self.detector.emotion_detected
                 
-                # Verificar si el texto es demasiado largo
-                if len(recommendation_text) > 35:
-                    words = recommendation_text.split()
-                    lines = []
-                    current_line = ""
+                if emotion in rec_manager.recommendations:
+                    y_pos = rec_panel_y + 90
                     
-                    for word in words:
-                        if len(current_line + " " + word) <= 35:
-                            current_line += " " + word if current_line else word
-                        else:
-                            lines.append(current_line)
-                            current_line = word
+                    # Título para mensajes
+                    if rec_manager.recommendations[emotion].get('mensajes', []) and self.detector.preferences.get('show_messages', True):
+                        cv2.putText(panel, "Mensajes:", (20, y_pos),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
+                        y_pos += 25
+                        
+                        # Mostrar los mensajes disponibles (limitado a 3 por espacio)
+                        mensajes = rec_manager.recommendations[emotion].get('mensajes', [])
+                        for i, mensaje in enumerate(mensajes[:2]):
+                            # Dividir mensajes largos
+                            self._draw_wrapped_text(panel, mensaje, (20, y_pos), 
+                                                (255, 255, 255), 0.55, self.detector.panel_width - 40)
+                            y_pos += 40  # Más espacio entre mensajes
+                        
+                        # Si hay más mensajes, mostrar indicador
+                        if len(mensajes) > 2:
+                            cv2.putText(panel, f"+ {len(mensajes) - 2} más...", (20, y_pos),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (150, 150, 150), 1)
+                            y_pos += 20
                     
-                    if current_line:
-                        lines.append(current_line)
+                    y_pos += 10  # Espacio adicional
                     
-                    for line in lines:
-                        cv2.putText(panel, line, (20, y_pos), 
-                                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.recommendation_color, 1)
-                        y_pos += 20
-                else:
-                    cv2.putText(panel, recommendation_text, (20, y_pos), 
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, self.recommendation_color, 1)
-                    y_pos += 20
-                
-                # Mostrar opción de música si está activada
-                if self.show_music_option:
-                    cv2.putText(panel, "Presiona 'M' para escuchar música", (20, y_pos), 
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+                    # Título para acciones
+                    if rec_manager.recommendations[emotion].get('acciones', []) and self.detector.preferences.get('show_actions', True):
+                        cv2.putText(panel, "Sugerencias:", (20, y_pos),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
+                        y_pos += 25
+                        
+                        # Mostrar las acciones disponibles (limitado por espacio)
+                        acciones = rec_manager.recommendations[emotion].get('acciones', [])
+                        for i, accion in enumerate(acciones[:2]):
+                            self._draw_wrapped_text(panel, f"• {accion}", (20, y_pos),
+                                                (200, 255, 200), 0.55, self.detector.panel_width - 40)
+                            y_pos += 40
+                    
+                    # Opción de música
+                    if rec_manager.recommendations[emotion].get('musica', []) and self.detector.preferences.get('show_music', True):
+                        # Crear un botón visual para la música
+                        music_btn_y = panel.shape[0] - 75
+                        music_btn_height = 30
+                        cv2.rectangle(panel, (20, music_btn_y), (panel.shape[1] - 20, music_btn_y + music_btn_height), 
+                                    (0, 128, 255), -1)
+                        cv2.putText(panel, "Presiona 'M' para escuchar música recomendada", 
+                                (30, music_btn_y + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
             
-            # Instrucciones
-            cv2.putText(panel, 'R - Reiniciar', (20, panel.shape[0]-70), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
-            cv2.putText(panel, 'Q - Salir', (150, panel.shape[0]-70), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+            # Instrucciones en la parte inferior
+            cv2.putText(panel, 'R - Reiniciar', (20, panel.shape[0]-10), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+            cv2.putText(panel, 'Q - Salir', (150, panel.shape[0]-10), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+            
+
+        # Si terminamos la detección, mostrar resultado final
+        if self.detector.waiting_for_restart and self.detector.emotion_detected:
+            # Crear un fondo más grande para la recomendación
+            rec_panel_height = 200  # Altura reducida ya que mostraremos menos contenido
+            rec_panel_y = panel.shape[0] - rec_panel_height - 30
+            cv2.rectangle(panel, (10, rec_panel_y), (panel.shape[1]-10, panel.shape[0]-30), (30, 30, 30), -1)
+            cv2.rectangle(panel, (10, rec_panel_y), (panel.shape[1]-10, panel.shape[0]-30), (100, 100, 100), 1)
+            
+            # Texto de resultado
+            cv2.putText(panel, "Resultado final:", (20, rec_panel_y + 25), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+            
+            color = self.get_emotion_color(self.detector.emotion_detected)
+            cv2.putText(panel, self.detector.emotion_detected, (20, rec_panel_y + 55), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
+            
+            # Mostrar solo la recomendación seleccionada
+            if self.detector.emotion_detected and hasattr(self.detector, 'recommendation_manager'):
+                rec_manager = self.detector.recommendation_manager
                 
+                if rec_manager.selected_recommendation['contenido']:
+                    y_pos = rec_panel_y + 90
+                    
+                    # Título según el tipo de recomendación
+                    if rec_manager.selected_recommendation['tipo'] == 'mensajes':
+                        cv2.putText(panel, "Mensaje:", (20, y_pos),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
+                    elif rec_manager.selected_recommendation['tipo'] == 'acciones':
+                        cv2.putText(panel, "Sugerencia:", (20, y_pos),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
+                    
+                    y_pos += 25
+                    
+                    # Mostrar el contenido de la recomendación seleccionada
+                    self._draw_wrapped_text(panel, rec_manager.selected_recommendation['contenido'], 
+                                        (20, y_pos), (255, 255, 255), 0.55, 
+                                        self.detector.panel_width - 40)
+            
+            # Opción de música (conservamos esta parte)
+            if hasattr(self.detector, 'recommendation_manager') and self.detector.preferences.get('show_music', True):
+                rec_manager = self.detector.recommendation_manager
+                emotion = self.detector.emotion_detected
+                
+                if emotion in rec_manager.recommendations and rec_manager.recommendations[emotion].get('musica', []):
+                    # Crear un botón visual para la música
+                    music_btn_y = panel.shape[0] - 75
+                    music_btn_height = 30
+                    cv2.rectangle(panel, (20, music_btn_y), (panel.shape[1] - 20, music_btn_y + music_btn_height), 
+                                (0, 128, 255), -1)
+                    cv2.putText(panel, "Presiona 'M' para escuchar música recomendada", 
+                            (30, music_btn_y + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            
+            # Instrucciones en la parte inferior
+            cv2.putText(panel, 'R - Reiniciar', (20, panel.shape[0]-10), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+            cv2.putText(panel, 'Q - Salir', (150, panel.shape[0]-10), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)        
         return panel
+
+    def _draw_wrapped_text(self, img, text, pos, color, font_scale, max_width):
+        """Dibuja texto con ajuste de línea"""
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        line_height = int(font_scale * 30)
+        x, y = pos
+        
+        # Dividir el texto en palabras
+        words = text.split()
+        if not words:
+            return y
+        
+        # Construir líneas que quepan en max_width
+        lines = []
+        current_line = words[0]
+        for word in words[1:]:
+            # Estimar el ancho del texto con getTextSize
+            test_line = current_line + ' ' + word
+            (test_width, _), _ = cv2.getTextSize(test_line, font, font_scale, 1)
+            
+            if test_width <= max_width:
+                current_line = test_line
+            else:
+                lines.append(current_line)
+                current_line = word
+        lines.append(current_line)
+        
+        # Dibujar cada línea
+        for i, line in enumerate(lines):
+            cv2.putText(img, line, (x, y + i * line_height), font, font_scale, color, 1)
+        
+        return y + len(lines) * line_height
     
     def draw_progress_bar(self, frame, elapsed, total=4):
         """Dibuja una barra de progreso para el tiempo de espera"""

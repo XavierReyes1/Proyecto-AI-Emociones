@@ -4,6 +4,12 @@
   },
   "2025-04-22": {
     "Enojado": 1,
-    "Triste": 1
+    "Triste": 1,
+    "Feliz": 2
+  },
+  "2025-04-23": {
+    "Feliz": 3,
+    "Neutral": 4,
+    "Triste": 2
   }
 }

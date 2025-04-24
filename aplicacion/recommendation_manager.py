@@ -21,6 +21,13 @@ class RecommendationManager:
         # Ruta para guardar el historial de emociones
         self.history_file = os.path.join(os.path.dirname(__file__), 'emotion_history.json')
         
+        # Nueva variable para la recomendación seleccionada
+        self.selected_recommendation = {
+            'tipo': None,  # 'mensaje', 'accion', o 'musica'
+            'contenido': None,
+            'color': None
+        }
+        
         # Diccionario de recomendaciones por emoción
         self.recommendations = {
             'Feliz': {
@@ -222,6 +229,53 @@ class RecommendationManager:
             return random.choice(recommendations)
         return None
     
+    def select_recommendation_type(self, emotion):
+        """Selecciona un tipo de recomendación basado en las preferencias"""
+        # Lista de tipos de recomendación disponibles según preferencias
+        available_types = []
+        
+        if self.detector.preferences.get('show_messages', True):
+            available_types.append('mensajes')
+        if self.detector.preferences.get('show_actions', True):
+            available_types.append('acciones')
+        
+        # Si hay tipos disponibles, seleccionar uno al azar
+        if available_types:
+            selected_type = random.choice(available_types)
+            return selected_type
+        return None
+
+    def select_single_recommendation(self, emotion):
+        """Selecciona una sola recomendación entre todos los tipos disponibles"""
+        rec_type = self.select_recommendation_type(emotion)
+        if not rec_type:
+            return False
+        
+        content = self.get_random_recommendation(emotion, rec_type)
+        if not content:
+            return False
+        
+        # Formatear el contenido según el tipo
+        formatted_content = content
+        if rec_type == 'acciones':
+            formatted_content = f"Sugerencia: {content}"
+        
+        # Guardar la recomendación seleccionada
+        self.selected_recommendation = {
+            'tipo': rec_type,
+            'contenido': formatted_content,
+            'color': self.recommendations[emotion]['color']
+        }
+        
+        # Actualizar la UI
+        self.detector.ui_manager.set_recommendation(
+            formatted_content,
+            self.recommendations[emotion]['color'],
+            rec_type == 'musica'
+        )
+        
+        return True
+    
     def start_recommendations(self, emotion):
         """Inicia el proceso de recomendaciones para una emoción detectada"""
         if emotion != self.current_emotion:
@@ -254,33 +308,26 @@ class RecommendationManager:
             self.recommendation_thread.join(timeout=1)
             self.stop_recommendation.clear()
         self.current_emotion = None
+        self.selected_recommendation = {'tipo': None, 'contenido': None, 'color': None}
     
     def _recommendation_loop(self, emotion):
-        """Hilo que muestra recomendaciones periódicamente"""
-        # Mostrar mensaje inicial
-        mensaje = self.get_random_recommendation(emotion, 'mensajes')
-        self.detector.ui_manager.set_recommendation(mensaje, self.recommendations[emotion]['color'])
+        """Hilo que muestra una sola recomendación"""
+        # Seleccionar una recomendación al azar
+        self.select_single_recommendation(emotion)
         
-        # Esperar un tiempo antes de mostrar recomendación de acción
-        time.sleep(5)
-        if self.stop_recommendation.is_set():
-            return
+        # Si está habilitada la opción de música, mostrarla después de un tiempo
+        if self.detector.preferences.get('show_music', True):
+            time.sleep(8)  # Mostrar la primera recomendación por 8 segundos
             
-        # Mostrar recomendación de acción
-        accion = self.get_random_recommendation(emotion, 'acciones')
-        self.detector.ui_manager.set_recommendation(f"Sugerencia: {accion}", self.recommendations[emotion]['color'])
-        
-        # Preguntar si quiere música
-        time.sleep(5)
-        if self.stop_recommendation.is_set():
-            return
-            
-        # Mostrar opción de música
-        self.detector.ui_manager.set_recommendation(
-            "Presiona 'M' para escuchar música recomendada para este estado emocional", 
-            self.recommendations[emotion]['color'],
-            show_music_option=True
-        )
+            if self.stop_recommendation.is_set():
+                return
+                
+            # Mostrar opción de música
+            self.detector.ui_manager.set_recommendation(
+                "Presiona 'M' para escuchar música recomendada para este estado emocional", 
+                self.recommendations[emotion]['color'],
+                True  # Mostrar opción de música
+            )
     
     def play_music_recommendation(self):
         """Reproduce música recomendada para la emoción actual"""
