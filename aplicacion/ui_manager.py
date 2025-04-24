@@ -1,3 +1,4 @@
+
 # ui_manager.py - Gestión de la interfaz de usuario para la detección de emociones
 
 import cv2
@@ -10,15 +11,15 @@ class UIManager:
     def __init__(self, detector):
         self.detector = detector
         
-        # Colores para cada emoción
+        # Colores para cada emoción en formato BGR (Blue, Green, Red)
         self.emotion_colors = {
-            'Sorprendido': (255, 255, 0),   # Amarillo
-            'Temeroso': (255, 0, 255),      # Magenta
-            'Disgustado': (0, 0, 255),      # Rojo
-            'Feliz': (0, 255, 0),           # Verde
-            'Triste': (255, 0, 0),          # Azul
-            'Enojado': (0, 0, 128),         # Rojo oscuro
-            'Neutral': (255, 255, 255)      # Blanco
+            'Sorprendido': (0, 255, 255),    # Amarillo
+            'Temeroso': (255, 0, 255),       # Magenta
+            'Disgustado': (255, 0, 0),       # Azul
+            'Feliz': (0, 255, 0),            # Verde
+            'Triste': (0, 0, 255),           # Rojo
+            'Enojado': (128, 0, 0),          # Azul oscuro
+            'Neutral': (255, 255, 255)       # Blanco
         }
         
         # Variables para recomendaciones
@@ -35,9 +36,7 @@ class UIManager:
         self.current_recommendation = text
         self.recommendation_color = color
         self.show_music_option = show_music_option
-        
-    # En ui_manager.py
-
+    
     def create_info_panel(self):
         """Crea un panel lateral para mostrar información"""
         panel = np.zeros((self.detector.window_height, self.detector.panel_width, 3), dtype=np.uint8)
@@ -61,10 +60,6 @@ class UIManager:
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
         cv2.putText(panel, self.detector.instruction, (20, 115), 
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
-        
-        # FPS
-        cv2.putText(panel, f"FPS: {self.detector.fps:.1f}", (panel.shape[1] - 100, panel.shape[0] - 20), 
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
         
         # Si estamos detectando, mostrar tiempo
         if self.detector.detecting:
@@ -137,84 +132,8 @@ class UIManager:
                 
         # Si terminamos la detección, mostrar resultado final
         if self.detector.waiting_for_restart and self.detector.emotion_detected:
-            # Crear un fondo más grande para las recomendaciones (panel de recomendaciones mejorado)
-            rec_panel_height = 280  # Aumentamos la altura del panel
-            rec_panel_y = panel.shape[0] - rec_panel_height - 30  # Posición Y ajustada
-            cv2.rectangle(panel, (10, rec_panel_y), (panel.shape[1]-10, panel.shape[0]-30), (30, 30, 30), -1)
-            cv2.rectangle(panel, (10, rec_panel_y), (panel.shape[1]-10, panel.shape[0]-30), (100, 100, 100), 1)
-            
-            # Texto de resultado
-            cv2.putText(panel, "Resultado final:", (20, rec_panel_y + 25), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-            
-            color = self.get_emotion_color(self.detector.emotion_detected)
-            cv2.putText(panel, self.detector.emotion_detected, (20, rec_panel_y + 55), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
-            
-            # Mostrar todas las recomendaciones disponibles
-            if self.detector.emotion_detected and hasattr(self.detector, 'recommendation_manager'):
-                rec_manager = self.detector.recommendation_manager
-                emotion = self.detector.emotion_detected
-                
-                if emotion in rec_manager.recommendations:
-                    y_pos = rec_panel_y + 90
-                    
-                    # Título para mensajes
-                    if rec_manager.recommendations[emotion].get('mensajes', []) and self.detector.preferences.get('show_messages', True):
-                        cv2.putText(panel, "Mensajes:", (20, y_pos),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
-                        y_pos += 25
-                        
-                        # Mostrar los mensajes disponibles (limitado a 3 por espacio)
-                        mensajes = rec_manager.recommendations[emotion].get('mensajes', [])
-                        for i, mensaje in enumerate(mensajes[:2]):
-                            # Dividir mensajes largos
-                            self._draw_wrapped_text(panel, mensaje, (20, y_pos), 
-                                                (255, 255, 255), 0.55, self.detector.panel_width - 40)
-                            y_pos += 40  # Más espacio entre mensajes
-                        
-                        # Si hay más mensajes, mostrar indicador
-                        if len(mensajes) > 2:
-                            cv2.putText(panel, f"+ {len(mensajes) - 2} más...", (20, y_pos),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (150, 150, 150), 1)
-                            y_pos += 20
-                    
-                    y_pos += 10  # Espacio adicional
-                    
-                    # Título para acciones
-                    if rec_manager.recommendations[emotion].get('acciones', []) and self.detector.preferences.get('show_actions', True):
-                        cv2.putText(panel, "Sugerencias:", (20, y_pos),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
-                        y_pos += 25
-                        
-                        # Mostrar las acciones disponibles (limitado por espacio)
-                        acciones = rec_manager.recommendations[emotion].get('acciones', [])
-                        for i, accion in enumerate(acciones[:2]):
-                            self._draw_wrapped_text(panel, f"• {accion}", (20, y_pos),
-                                                (200, 255, 200), 0.55, self.detector.panel_width - 40)
-                            y_pos += 40
-                    
-                    # Opción de música
-                    if rec_manager.recommendations[emotion].get('musica', []) and self.detector.preferences.get('show_music', True):
-                        # Crear un botón visual para la música
-                        music_btn_y = panel.shape[0] - 75
-                        music_btn_height = 30
-                        cv2.rectangle(panel, (20, music_btn_y), (panel.shape[1] - 20, music_btn_y + music_btn_height), 
-                                    (0, 128, 255), -1)
-                        cv2.putText(panel, "Presiona 'M' para escuchar música recomendada", 
-                                (30, music_btn_y + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-            
-            # Instrucciones en la parte inferior
-            cv2.putText(panel, 'R - Reiniciar', (20, panel.shape[0]-10), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
-            cv2.putText(panel, 'Q - Salir', (150, panel.shape[0]-10), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
-            
-
-        # Si terminamos la detección, mostrar resultado final
-        if self.detector.waiting_for_restart and self.detector.emotion_detected:
             # Crear un fondo más grande para la recomendación
-            rec_panel_height = 200  # Altura reducida ya que mostraremos menos contenido
+            rec_panel_height = 280  # Altura del panel para recomendaciones
             rec_panel_y = panel.shape[0] - rec_panel_height - 30
             cv2.rectangle(panel, (10, rec_panel_y), (panel.shape[1]-10, panel.shape[0]-30), (30, 30, 30), -1)
             cv2.rectangle(panel, (10, rec_panel_y), (panel.shape[1]-10, panel.shape[0]-30), (100, 100, 100), 1)
@@ -249,7 +168,7 @@ class UIManager:
                                         (20, y_pos), (255, 255, 255), 0.55, 
                                         self.detector.panel_width - 40)
             
-            # Opción de música (conservamos esta parte)
+            # Opción de música
             if hasattr(self.detector, 'recommendation_manager') and self.detector.preferences.get('show_music', True):
                 rec_manager = self.detector.recommendation_manager
                 emotion = self.detector.emotion_detected
@@ -267,7 +186,8 @@ class UIManager:
             cv2.putText(panel, 'R - Reiniciar', (20, panel.shape[0]-10), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
             cv2.putText(panel, 'Q - Salir', (150, panel.shape[0]-10), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)        
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+                
         return panel
 
     def _draw_wrapped_text(self, img, text, pos, color, font_scale, max_width):

@@ -21,168 +21,168 @@ class RecommendationManager:
         # Ruta para guardar el historial de emociones
         self.history_file = os.path.join(os.path.dirname(__file__), 'emotion_history.json')
         
-        # Nueva variable para la recomendación seleccionada
+        # Nueva variable para la recomendacion seleccionada
         self.selected_recommendation = {
-            'tipo': None,  # 'mensaje', 'accion', o 'musica'
+            'tipo': None,
             'contenido': None,
             'color': None
         }
         
-        # Diccionario de recomendaciones por emoción
+        # Diccionario de recomendaciones por emocion
         self.recommendations = {
             'Feliz': {
                 'mensajes': [
-                    "¡Tu felicidad es contagiosa! Sigue así.",
-                    "Aprovecha esta energía positiva para hacer algo que disfrutes.",
-                    "Comparte tu alegría con alguien cercano.",
-                    "La felicidad te sienta bien. ¡Disfrútala!",
-                    "¡Qué bueno verte feliz! Aprovecha el momento."
+                    "Tu felicidad es contagiosa! Sigue asi.",
+                    "Aprovecha esta energia positiva para hacer algo que disfrutes.",
+                    "Comparte tu alegria con alguien cercano.",
+                    "La felicidad te sienta bien. Disfrutala!",
+                    "Que bueno verte feliz! Aprovecha el momento."
                 ],
                 'musica': [
-                    "https://www.youtube.com/watch?v=ZbZSe6N_BXs",  # Happy - Pharrell Williams
-                    "https://www.youtube.com/watch?v=ru0K8uYEZWw",  # Good Feeling - Flo Rida
-                    "https://www.youtube.com/watch?v=y6Sxv-sUYtM",  # Happy - Pharrell Williams
-                    "https://www.youtube.com/watch?v=09R8_2nJtjg"   # Uptown Funk - Mark Ronson ft. Bruno Mars
+                    "https://www.youtube.com/watch?v=ZbZSe6N_BXs",
+                    "https://www.youtube.com/watch?v=ru0K8uYEZWw",
+                    "https://www.youtube.com/watch?v=y6Sxv-sUYtM",
+                    "https://www.youtube.com/watch?v=09R8_2nJtjg"
                 ],
                 'acciones': [
-                    "Escribe tres cosas por las que estás agradecido hoy",
+                    "Escribe tres cosas por las que estas agradecido hoy",
                     "Llama a un amigo y comparte tu buen humor",
-                    "Celebra tu momento feliz con una pequeña recompensa",
+                    "Celebra tu momento feliz con una pequena recompensa",
                     "Toma una foto para recordar este momento feliz"
                 ],
-                'color': (0, 255, 0)  # Verde
+                'color': (0, 255, 0)
             },
             'Triste': {
                 'mensajes': [
-                    "Está bien sentirse triste a veces. Permite sentir tus emociones.",
+                    "Esta bien sentirse triste a veces. Permite sentir tus emociones.",
                     "Recuerda que todos los sentimientos son temporales.",
-                    "Respira profundo. Inhala calma, exhala tensión.",
-                    "Sé amable contigo mismo en los momentos difíciles.",
-                    "A veces necesitamos días nublados para apreciar el sol."
+                    "Respira profundo. Inhala calma, exhala tension.",
+                    "Se amable contigo mismo en los momentos dificiles.",
+                    "A veces necesitamos dias nublados para apreciar el sol."
                 ],
                 'musica': [
-                    "https://www.youtube.com/watch?v=qeMFqkcPYcg",  # Sweet Dreams - Eurythmics
-                    "https://www.youtube.com/watch?v=5anLPw0Efmo",  # Everybody Hurts - R.E.M.
-                    "https://www.youtube.com/watch?v=WA4iX5D9Z64",  # Fix You - Coldplay
-                    "https://www.youtube.com/watch?v=bIB8EWqCPrQ"   # The Scientist - Coldplay
+                    "https://www.youtube.com/watch?v=qeMFqkcPYcg",
+                    "https://www.youtube.com/watch?v=5anLPw0Efmo",
+                    "https://www.youtube.com/watch?v=WA4iX5D9Z64",
+                    "https://www.youtube.com/watch?v=bIB8EWqCPrQ"
                 ],
                 'acciones': [
                     "Escribe en un diario sobre lo que sientes",
                     "Sal a caminar por 10 minutos al aire libre",
-                    "Prepárate una taza de té caliente",
+                    "Preparate una taza de te caliente",
                     "Contacta a un ser querido que te haga sentir mejor"
                 ],
-                'color': (255, 0, 0)  # Azul
+                'color': (255, 0, 0)
             },
             'Enojado': {
                 'mensajes': [
                     "Respira profundamente, inhala por la nariz y exhala por la boca.",
-                    "¿Puedes identificar qué desencadenó este sentimiento?",
-                    "El enojo a veces nos señala límites que debemos establecer.",
-                    "Toma distancia de la situación si es posible.",
-                    "Siente la emoción, pero no permitas que te controle."
+                    "Puedes identificar que desencadeno este sentimiento?",
+                    "El enojo a veces nos senala limites que debemos establecer.",
+                    "Toma distancia de la situacion si es posible.",
+                    "Siente la emocion, pero no permitas que te controle."
                 ],
                 'musica': [
-                    "https://www.youtube.com/watch?v=hTWKbfoikeg",  # Smells Like Teen Spirit - Nirvana
-                    "https://www.youtube.com/watch?v=5abamRO41fE",  # Música de relajación
-                    "https://www.youtube.com/watch?v=e-QFj59PON4",  # Música para calmar la ira
-                    "https://www.youtube.com/watch?v=UDVtMYqUAyw"   # Música de meditación
+                    "https://www.youtube.com/watch?v=hTWKbfoikeg",
+                    "https://www.youtube.com/watch?v=5abamRO41fE",
+                    "https://www.youtube.com/watch?v=e-QFj59PON4",
+                    "https://www.youtube.com/watch?v=UDVtMYqUAyw"
                 ],
                 'acciones': [
-                    "Haz 10 respiraciones profundas contando hasta 5 en cada inhalación",
-                    "Escribe lo que te molesta en un papel y luego destrúyelo",
-                    "Realiza ejercicio físico para liberar tensión",
-                    "Aléjate de la situación por un momento para calmarte"
+                    "Haz 10 respiraciones profundas contando hasta 5 en cada inhalacion",
+                    "Escribe lo que te molesta en un papel y luego destruyelo",
+                    "Realiza ejercicio fisico para liberar tension",
+                    "Alejate de la situacion por un momento para calmarte"
                 ],
-                'color': (0, 0, 128)  # Rojo oscuro
+                'color': (0, 0, 128)
             },
             'Temeroso': {
                 'mensajes': [
-                    "El miedo es una respuesta natural. Reconócelo sin juzgarte.",
-                    "Recuerda: has superado situaciones difíciles antes.",
-                    "Enfócate en lo que puedes controlar ahora mismo.",
-                    "Estás a salvo en este momento. Respira.",
-                    "Pequeños pasos te llevan lejos. ¿Cuál sería el primero?"
+                    "El miedo es una respuesta natural. Reconocelo sin juzgarte.",
+                    "Recuerda: has superado situaciones dificiles antes.",
+                    "Enfocate en lo que puedes controlar ahora mismo.",
+                    "Estas a salvo en este momento. Respira.",
+                    "Pequenos pasos te llevan lejos. Cual seria el primero?"
                 ],
                 'musica': [
-                    "https://www.youtube.com/watch?v=lp-EO5I60KA",  # Weightless - Marconi Union
-                    "https://www.youtube.com/watch?v=UfcAVejslrU",  # Música relajante
-                    "https://www.youtube.com/watch?v=bJJkEgJU3uE",  # Música para reducir ansiedad
-                    "https://www.youtube.com/watch?v=9Q634rbsypE"   # Música para calmar el miedo
+                    "https://www.youtube.com/watch?v=lp-EO5I60KA",
+                    "https://www.youtube.com/watch?v=UfcAVejslrU",
+                    "https://www.youtube.com/watch?v=bJJkEgJU3uE",
+                    "https://www.youtube.com/watch?v=9Q634rbsypE"
                 ],
                 'acciones': [
-                    "Practica la técnica 5-4-3-2-1: nombra 5 cosas que ves, 4 que puedes tocar, 3 que oyes, 2 que hueles y 1 que saboreas",
+                    "Practica la tecnica 5-4-3-2-1: nombra 5 cosas que ves, 4 que puedes tocar, 3 que oyes, 2 que hueles y 1 que saboreas",
                     "Visualiza un lugar donde te sientas seguro y tranquilo",
-                    "Escribe tus miedos y cómo podrías afrontarlos",
-                    "Realiza un ejercicio de respiración: inhala 4 segundos, mantén 7, exhala 8"
+                    "Escribe tus miedos y como podrias afrontarlos",
+                    "Realiza un ejercicio de respiracion: inhala 4 segundos, manten 7, exhala 8"
                 ],
-                'color': (255, 0, 255)  # Magenta
+                'color': (255, 0, 255)
             },
             'Disgustado': {
                 'mensajes': [
-                    "El disgusto nos ayuda a establecer límites personales.",
-                    "Identifica qué genera esta emoción y evalúa si puedes modificarlo.",
-                    "A veces el disgusto señala valores importantes para ti.",
-                    "¿Puedes cambiar la situación o tu perspectiva sobre ella?",
+                    "El disgusto nos ayuda a establecer limites personales.",
+                    "Identifica que genera esta emocion y evalua si puedes modificarlo.",
+                    "A veces el disgusto senala valores importantes para ti.",
+                    "Puedes cambiar la situacion o tu perspectiva sobre ella?",
                     "Toma un momento para reflexionar sobre tus reacciones."
                 ],
                 'musica': [
-                    "https://www.youtube.com/watch?v=ZXhuso4OTG4",  # Música para elevar el ánimo
-                    "https://www.youtube.com/watch?v=jWFWazj7Ud8",  # Música de relajación
-                    "https://www.youtube.com/watch?v=cZnBNuqqz5g",  # Música para cambiar el estado de ánimo
-                    "https://www.youtube.com/watch?v=QxHkLdQy5f0"   # Música para bienestar
+                    "https://www.youtube.com/watch?v=ZXhuso4OTG4",
+                    "https://www.youtube.com/watch?v=jWFWazj7Ud8",
+                    "https://www.youtube.com/watch?v=cZnBNuqqz5g",
+                    "https://www.youtube.com/watch?v=QxHkLdQy5f0"
                 ],
                 'acciones': [
                     "Cambia tu entorno: abre una ventana o ve a otro espacio",
-                    "Prueba un ejercicio de atención plena enfocándote en sensaciones agradables",
-                    "Toma un pequeño descanso y haz algo que te guste",
-                    "Practica la aceptación de emociones incómodas"
+                    "Prueba un ejercicio de atencion plena enfocandote en sensaciones agradables",
+                    "Toma un pequeno descanso y haz algo que te guste",
+                    "Practica la aceptacion de emociones incomodas"
                 ],
-                'color': (0, 0, 255)  # Rojo
+                'color': (0, 0, 255)
             },
             'Sorprendido': {
                 'mensajes': [
                     "La sorpresa nos ayuda a adaptarnos a lo inesperado.",
                     "Aprovecha este estado de alerta para ver las cosas desde una nueva perspectiva.",
-                    "¿Qué puedes aprender de esta situación sorpresiva?",
+                    "Que puedes aprender de esta situacion sorpresiva?",
                     "Lo inesperado a veces trae las mejores oportunidades.",
                     "Respira y date tiempo para procesar lo que ocurre."
                 ],
                 'musica': [
-                    "https://www.youtube.com/watch?v=6JCLY0Rlx6Q",  # Feel It Still - Portugal. The Man
-                    "https://www.youtube.com/watch?v=8UVNT4wvIGY",  # Somebody That I Used To Know - Gotye
-                    "https://www.youtube.com/watch?v=1k8craCGpgs",  # Don't Stop Me Now - Queen
-                    "https://www.youtube.com/watch?v=btPJPFnesV4"   # Eye of the Tiger - Survivor
+                    "https://www.youtube.com/watch?v=6JCLY0Rlx6Q",
+                    "https://www.youtube.com/watch?v=8UVNT4wvIGY",
+                    "https://www.youtube.com/watch?v=1k8craCGpgs",
+                    "https://www.youtube.com/watch?v=btPJPFnesV4"
                 ],
                 'acciones': [
-                    "Escribe sobre la situación que te sorprendió y cómo te hizo sentir",
-                    "Haz una pequeña pausa para integrar lo sucedido",
-                    "Evalúa si necesitas más información para entender mejor la situación",
+                    "Escribe sobre la situacion que te sorprendio y como te hizo sentir",
+                    "Haz una pequena pausa para integrar lo sucedido",
+                    "Evalua si necesitas mas informacion para entender mejor la situacion",
                     "Comparte tu experiencia con alguien de confianza"
                 ],
-                'color': (255, 255, 0)  # Amarillo
+                'color': (255, 255, 0)
             },
             'Neutral': {
                 'mensajes': [
-                    "El estado neutral es perfecto para la introspección y planificación.",
-                    "¿Qué actividad te gustaría realizar ahora mismo?",
-                    "Un buen momento para establecer metas del día.",
+                    "El estado neutral es perfecto para la introspeccion y planificacion.",
+                    "Que actividad te gustaria realizar ahora mismo?",
+                    "Un buen momento para establecer metas del dia.",
                     "La calma es un excelente estado para tomar decisiones.",
-                    "¿Cómo te gustaría sentirte en las próximas horas?"
+                    "Como te gustaria sentirte en las proximas horas?"
                 ],
                 'musica': [
-                    "https://www.youtube.com/watch?v=9Aebi-qwl4Q",  # Lo-fi beats
-                    "https://www.youtube.com/watch?v=5qap5aO4i9A",  # Música para estudiar
-                    "https://www.youtube.com/watch?v=jfKfPfyJRdk",  # Música para concentrarse
-                    "https://www.youtube.com/watch?v=DWcJFNfaw9c"   # Música ambiental
+                    "https://www.youtube.com/watch?v=9Aebi-qwl4Q",
+                    "https://www.youtube.com/watch?v=5qap5aO4i9A",
+                    "https://www.youtube.com/watch?v=jfKfPfyJRdk",
+                    "https://www.youtube.com/watch?v=DWcJFNfaw9c"
                 ],
                 'acciones': [
-                    "Establece una pequeña meta para hoy",
-                    "Realiza una actividad que te brinde satisfacción",
+                    "Establece una pequena meta para hoy",
+                    "Realiza una actividad que te brinde satisfaccion",
                     "Toma 5 minutos para meditar o practicar mindfulness",
-                    "Reflexiona sobre qué actividades te generan más emociones positivas"
+                    "Reflexiona sobre que actividades te generan mas emociones positivas"
                 ],
-                'color': (255, 255, 255)  # Blanco
+                'color': (255, 255, 255)
             }
         }
         
