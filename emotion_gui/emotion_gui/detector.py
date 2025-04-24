@@ -9,17 +9,38 @@ import os
 
 from model_manager import ModelManager
 from ui_manager import UIManager
+from recommendation_manager import RecommendationManager
 
 class EmotionDetector:
     """Clase principal que maneja el detector de emociones faciales"""
     
-    def __init__(self):
-        # Dimensiones de la interfaz
-        self.camera_width = 640
-        self.camera_height = 480
-        self.panel_width = 320
-        self.window_width = self.camera_width + self.panel_width
-        self.window_height = self.camera_height
+    def __init__(self, preferences=None):
+        # Guardar preferencias del usuario
+        self.preferences = preferences or {
+            'show_messages': True,
+            'show_music': True,
+            'show_actions': True,
+            'use_colors': True,
+            'random_recommendations': False,
+            'window_width': 1280,
+            'window_height': 720
+        }
+        
+        # Calcular dimensiones de la interfaz basadas en preferencias
+        ratio = 16/9  # Relación de aspecto típica
+        
+        # Asegurar que el alto sea al menos 480 y el ancho al menos 640
+        self.window_width = max(640, self.preferences.get('window_width', 1280))
+        self.window_height = max(480, self.preferences.get('window_height', 720))
+        
+        # Calcular dimensiones de la cámara y panel
+        self.camera_width = int(self.window_width * 0.7)  # La cámara ocupa el 70% del ancho
+        self.camera_height = self.window_height
+        self.panel_width = self.window_width - self.camera_width
+        
+        print(f"Configurando ventana: {self.window_width}x{self.window_height}")
+        print(f"Panel de camara: {self.camera_width}x{self.camera_height}")
+        print(f"Panel de info: {self.panel_width}x{self.window_height}")
         
         # Estado de la aplicación
         self.detecting = False
@@ -55,6 +76,9 @@ class EmotionDetector:
         self.cap = None
         self.face_cascade = None
         
+        # Inicializar el gestor de recomendaciones después de UI
+        self.recommendation_manager = None
+        
     def initialize(self):
         """Inicializa los recursos necesarios"""
         try:
@@ -66,7 +90,7 @@ class EmotionDetector:
             # Inicializar cámara
             self.cap = cv2.VideoCapture(0)
             if not self.cap.isOpened():
-                raise Exception("No se pudo abrir la cámara")
+                raise Exception("No se pudo abrir la camara")
             
             # Configurar resolución de la cámara
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.camera_width)
@@ -74,6 +98,9 @@ class EmotionDetector:
             
             # Iniciar carga del modelo en un hilo separado
             self.model_manager.load_model_async()
+            
+            # Inicializar el gestor de recomendaciones
+            self.recommendation_manager = RecommendationManager(self)
                 
             return True
         except Exception as e:
@@ -81,22 +108,25 @@ class EmotionDetector:
             return False
     
     def preprocess_face(self, gray_frame, x, y, w, h):
-        """Preprocesa el rostro para la prediccion"""
+        """Preprocesa el rostro para la predicción"""
         return self.model_manager.preprocess_face(gray_frame, x, y, w, h)
 
     def get_most_frequent_emotion(self):
-        """Obtiene la emocion mas frecuente detectada durante el periodo"""
+        """Obtiene la emoción más frecuente detectada durante el periodo"""
         if not self.emotion_counter:
             return None
         return max(self.emotion_counter.items(), key=lambda x: x[1])[0]
     
     def process_frame(self, frame):
-        """Procesa un frame de la camara"""
+        """Procesa un frame de la cámara"""
+        # Redimensionar el frame si es necesario para que coincida con nuestras dimensiones
+        frame = cv2.resize(frame, (self.camera_width, self.camera_height))
+        
         # Crear un lienzo para la interfaz completa
         display = np.zeros((self.window_height, self.window_width, 3), dtype=np.uint8)
         
         # Colocar el frame de la cámara en el lado izquierdo
-        display[:, :self.camera_width] = frame
+        display[:self.camera_height, :self.camera_width] = frame
         
         # No procesar completamente si no hay modelo
         if not self.model_manager.model_ready():
@@ -166,23 +196,32 @@ class EmotionDetector:
                                 self.last_detection_time = current_time
 
                                 # Mostrar etiqueta de emoción actual sobre el rostro
-                                emotion_label = f"{current_emotion}"
-                                text_size = cv2.getTextSize(emotion_label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)[0]
-                                cv2.rectangle(frame, (x, y-text_size[1]-5), (x+text_size[0]+10, y), 
-                                             self.ui_manager.get_emotion_color(current_emotion), -1)
-                                cv2.putText(frame, emotion_label, (x+5, y-5), 
-                                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1)
+                                if self.preferences.get('use_colors', True):
+                                    emotion_label = f"{current_emotion}"
+                                    text_size = cv2.getTextSize(emotion_label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)[0]
+                                    cv2.rectangle(frame, (x, y-text_size[1]-5), (x+text_size[0]+10, y), 
+                                                self.ui_manager.get_emotion_color(current_emotion), -1)
+                                    cv2.putText(frame, emotion_label, (x+5, y-5), 
+                                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1)
 
                         # Esperar 4 segundos de estabilidad
                         if self.detecting and (current_time - self.start_time) >= 4:
                             self.emotion_detected = self.get_most_frequent_emotion()
                             self.waiting_for_restart = True
                             self.detecting = False
+                            
+                            # Iniciar recomendaciones basadas en la emoción detectada
+                            if self.emotion_detected and self.recommendation_manager:
+                                self.recommendation_manager.start_recommendations(self.emotion_detected)
                     
         # Si terminamos y tenemos resultado
         if self.waiting_for_restart and self.emotion_detected:
             # Mostrar resultado en el frame principal
-            color = self.ui_manager.get_emotion_color(self.emotion_detected)
+            if self.preferences.get('use_colors', True):
+                color = self.ui_manager.get_emotion_color(self.emotion_detected)
+            else:
+                color = (255, 255, 255)  # Blanco si no se usan colores
+                
             cv2.putText(frame, self.emotion_detected, (frame.shape[1]//2 - 100, frame.shape[0]//2), 
                        cv2.FONT_HERSHEY_DUPLEX, 1.5, color, 2)
 
@@ -226,6 +265,11 @@ class EmotionDetector:
         process_thread.start()
         
         try:
+            # Crear ventana con tamaño personalizado
+            window_name = 'Detector de Emociones (RAF-DB)'
+            cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(window_name, self.window_width, self.window_height)
+            
             while True:
                 ret, frame = self.cap.read()
                 if not ret:
@@ -243,7 +287,7 @@ class EmotionDetector:
                 
                 # Mostrar el frame procesado
                 if self.processed_frame is not None:
-                    cv2.imshow('Detector de Emociones (RAF-DB)', self.processed_frame)
+                    cv2.imshow(window_name, self.processed_frame)
 
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q'):
@@ -255,9 +299,22 @@ class EmotionDetector:
                     self.instruction = "Coloca tu rostro frente a la camara"
                     self.emotion_counter.clear()
                     
+                    # Detener recomendaciones
+                    if self.recommendation_manager:
+                        self.recommendation_manager.stop_recommendations()
+                        
+                # Tecla M para reproducir música recomendada
+                if key == ord('m') and self.waiting_for_restart:
+                    if self.recommendation_manager and self.preferences.get('show_music', True):
+                        self.recommendation_manager.play_music_recommendation()
+                    
         except KeyboardInterrupt:
             pass
         finally:
+            # Detener recomendaciones
+            if self.recommendation_manager:
+                self.recommendation_manager.stop_recommendations()
+                
             # Liberar recursos
             self.running = False
             self.frame_ready.set()  # Desbloquear el hilo de procesamiento
@@ -266,4 +323,4 @@ class EmotionDetector:
             if self.cap is not None:
                 self.cap.release()
             cv2.destroyAllWindows()
-            print("Aplicación terminada")
+            print("Aplicacion terminada")

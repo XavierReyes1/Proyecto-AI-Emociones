@@ -33,7 +33,7 @@ class ModelManager:
         return thread
         
     def _load_model(self):
-        """Implementacion de la carga del modelo"""
+        """Implementación de la carga del modelo"""
         try:
             # Configurar TensorFlow para usar menos memoria
             gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -43,17 +43,17 @@ class ModelManager:
             
             self.detector.instruction = "Cargando modelo de reconocimiento..."
             self.model = tf.keras.models.load_model(self.model_path)
-            self.detector.instruction = "Coloca tu rostro frente a la camara"
+            self.detector.instruction = "Coloca tu rostro frente a la cámara"
         except Exception as e:
             self.detector.instruction = f"Error al cargar el modelo: {e}"
             print(f"Error al cargar modelo: {e}")
     
     def model_ready(self):
-        """Verifica si el modelo esta listo para ser usado"""
+        """Verifica si el modelo está listo para ser usado"""
         return self.model is not None
         
     def preprocess_face(self, gray_frame, x, y, w, h):
-        """Preprocesa el rostro para la prediccion"""
+        """Preprocesa el rostro para la predicción"""
         face = gray_frame[y:y+h, x:x+w]
         face = cv2.resize(face, (48, 48))
         face = face.astype('float32') / 255.0
@@ -62,7 +62,7 @@ class ModelManager:
         return face
         
     def predict_emotion(self, face_input):
-        """Predice la emocion del rostro"""
+        """Predice la emoción del rostro"""
         if not self.model_ready():
             return None, 0
         
@@ -71,5 +71,5 @@ class ModelManager:
             emotion_idx = np.argmax(prediction)
             return self.EMOTION_LABELS[emotion_idx], prediction[0][emotion_idx]
         except Exception as e:
-            print(f"Error al predecir emocion: {e}")
+            print(f"Error al predecir emoción: {e}")
             return None, 0
